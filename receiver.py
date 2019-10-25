@@ -64,7 +64,7 @@ class Receiver:
                     total_rebuffering_time += rebuffering_time
                     total_rebuffering_event += 1
 
-                total_delay = lastPlay - f.timestamp
+                total_delay += lastPlay - f.timestamp
                 average_rate += f.bitrate
                 total_frame += 1
                 # fast forward to the end of the playing frame
@@ -73,7 +73,7 @@ class Receiver:
             q.flush()
 
             if total_frame == 0:
-                return 0
+                continue
 
             self.lastPlay[self.originQueueDict[q.name]] = lastPlay
             results[q.name] = {"total_rebuffering_event": total_rebuffering_event,
@@ -95,7 +95,7 @@ class Receiver:
                 self.queues[queue_nb].add(frame)
 
     def describe(self, full=False):
-        s = "Receiver: \nfps = {}, slot = {:.2f}, start_time = {:.3f}\nQueues:".format(self.fps, 1/self.fps, self.startPlay)
+        s = "Receiver: \nfps = {}, slot = {:.3f}, start_time = {:.3f}\nQueues:".format(self.fps, 1/self.fps, self.startPlay)
         for q in self.queues:
             s += "\n" + q.describe(full)
         return s
