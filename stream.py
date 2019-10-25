@@ -220,7 +220,7 @@ class Frame:
         s = "{} #{}: {}Kb | ".format(fs, self.order, self.size)
         if full:
             s = ("   {} #{}: {}Kb from {} stamp={:.5f} "
-                 "avail={:.3f} br={} \n").format(fs, self.order, self.size,
+                 "avail={:.5f} br={} \n").format(fs, self.order, self.size,
                                                  self.origin, self.timestamp % 100,
                                                  self.availability % 100, self.bitrate)
 
