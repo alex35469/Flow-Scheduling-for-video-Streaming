@@ -1,0 +1,28 @@
+PROJECT SPECIFICATION
+
+TITLE:
+
+Flow Scheduling for multiparty live video streaming
+
+
+DESCRIPTION:
+
+In multiparty live streaming, each client upload their video to a central server by encoding it with Scalable Video Coding (SVC) at different quality. The server is then in charge of redistributing every streaming content to each client. In order to keep the Quality of Experience (QoE) as high as possible, clever scheduling has to be made, i.e., which stream to distribute to a client first and at which quality. Multiple parameters have to be taken into account: 
+
+1. There are different priorities for different flows.
+2. A flow contains different quality of video streams.
+3. A flow has to be delivered in time to the client to not exceed a delay constraint
+4. The streaming content contains I-frame and P-frame that can be handled differently by the scheduler.
+
+
+The goal of the project would be to design a flow scheduling algorythm applied to live multicast video streaming. Create a simulator and evaluate the system. 
+
+
+
+
+TIMELINE:
+
+1. Implement a simulator for flow scheduling.
+2. Test a naive algorythm: the FIFO scheduler.
+3. Design an algorythm that can beat the FIFO scheduler
+
