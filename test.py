@@ -13,11 +13,6 @@ class FrameTestCase(unittest.TestCase):
         self.assertEqual(f.order, 3)
         self.assertTrue(f.Iframe)
 
-    def test_frame_timestamp(self):
-        f = Frame(43, 2, True)
-        t1 = time()
-        self.assertAlmostEqual(t1, f.timestamp, delta=0.01)
-
 
 class QueueTestCase(unittest.TestCase):
     def setUp(self):
@@ -106,20 +101,82 @@ class ReceiverTestCase(unittest.TestCase):
     def setUp(self):
         streamers = ["alice", "bob", "carlos", "davis", "egbert"]
         self.oqdict = {"alice":0, "bob":1, "carlos":2, "davis":3, "egbert":4}
-        self.receiver = Receiver(queues=[Queue(s) for s in streamers], fps=30)
+        self.receiverFull = Receiver(queues=[Queue(s) for s in streamers], fps=30)
+        self.receiverSimple = Receiver(queues=[Queue(s) for s in streamers[:2]], fps=30)
 
     def test_attributes(self):
-        self.assertEqual(self.receiver.originQueueDict,  self.oqdict)
+        self.assertEqual(self.receiverFull.originQueueDict,  self.oqdict)
 
     def test_receive(self):
         # Create frames
         af1, af3 = Frame(91, 1, True, "alice"), Frame(91, 3, True, "alice")
         bf2 = Frame(30, 2, False, "bob")
-        self.receiver.receive([af1, bf2, af3])
+        self.receiverFull.receive([af1, bf2, af3])
 
-        self.assertEqual(self.receiver.queues[self.oqdict["alice"]].dequeue(1)[0], af1)
-        self.assertEqual(self.receiver.queues[self.oqdict["alice"]].dequeue(1)[0], af3)
-        self.assertEqual(self.receiver.queues[self.oqdict["bob"]].dequeue(1)[0], bf2)
+        self.assertEqual(self.receiverFull.queues[self.oqdict["alice"]].dequeue(1)[0], af1)
+        self.assertEqual(self.receiverFull.queues[self.oqdict["alice"]].dequeue(1)[0], af3)
+        self.assertEqual(self.receiverFull.queues[self.oqdict["bob"]].dequeue(1)[0], bf2)
 
+    def test_playback(self):
+        self.receiverSimple.lastPlay = [15]*len(self.receiverSimple.queues)
+
+        # TEST One frame each received
+        af1 = Frame(10, 1, False, "alice", bitrate=500, timestamp=15.002, availability=15.005)
+        bf2 = Frame(60, 2, True, "bob", bitrate=600, timestamp=15.5, availability=16.5)
+        self.receiverSimple.receive([af1, bf2])
+        results = self.receiverSimple.playback()
+        expected = {"alice" : {"total_rebuffering_event" :1,
+                            "total_rebuffering_time" : 0.005,
+                            'total_delay': 0.003,
+                            "average_rate": 500.0,
+                            "total_frame": 1}
+                            ,
+                    "bob" : {"total_rebuffering_event" :1,
+                             "total_rebuffering_time" : 1.5,
+                             'total_delay': 1.0,
+                             "average_rate": 600.0,
+                             "total_frame": 1}}
+        self.assertEqual(results, expected)
+
+        # TEST 2 frames received only one streamer
+        bf3 = Frame(60, 4, True, "bob", bitrate=700, timestamp=15.7, availability=15.8)
+        bf4 = Frame(60, 5, True, "bob", bitrate=300, timestamp=15.7, availability=15.8)
+        self.receiverSimple.receive([bf3, bf4])
+        results = self.receiverSimple.playback()
+
+        expected = {"alice" : 0,
+                    "bob" : {"total_rebuffering_event" :0,
+                             "total_rebuffering_time" : 0,
+                             'total_delay': round(16.533 - 15.7 + 16.566 -15.7, 2),
+                             "average_rate": 500.0,
+                             "total_frame": 2}}
+        self.assertEqual(results, expected)
+        # Check playing time for alice and bob
+        self.assertAlmostEqual(self.receiverSimple.lastPlay[0],
+                               af1.availability + 1/self.receiverSimple.fps)
+        self.assertAlmostEqual(self.receiverSimple.lastPlay[1],
+                               bf2.availability + 3 * 1/self.receiverSimple.fps)
+
+
+        # TEST 2 frames received each (Alice has high latency, Bob high rebuffering)
+        bf5 = Frame(90, 4, True, "bob", bitrate=250, timestamp=16.05, availability=16.06)
+        af6 = Frame(60, 5, False, "alice", bitrate=300, timestamp=13.0, availability=14.6)
+        bf7 = Frame(60, 4, True, "bob", bitrate=350, timestamp=19.04, availability=19.05)
+        af8 = Frame(60, 4, True, "alice", bitrate=400, timestamp=14.0, availability=14.06)
+
+        self.receiverSimple.receive([bf5, af6, bf7, af8])
+        results = self.receiverSimple.playback()
+        expected = {"alice" : {"total_rebuffering_event" :0,
+                            "total_rebuffering_time" : 0.0,
+                            'total_delay': round(15.038333333333334 -13  + 15.038333333333334 + 0.0333333333 - 14.0, 2),
+                            "average_rate": 350.0,
+                            "total_frame": 2},
+                    "bob" : {"total_rebuffering_event" :1,
+                             "total_rebuffering_time" : 2.416667,
+                             'total_delay': 0.54 + 0.01 + 0.01,
+                             "average_rate": 300.0,
+                             "total_frame": 2}}
+
+        self.assertEqual(results, expected)
 if __name__ == '__main__':
     unittest.main()
