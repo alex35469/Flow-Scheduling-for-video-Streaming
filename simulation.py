@@ -13,12 +13,12 @@ Bandwith = 3  # Mbps
 # ############ ENVIRONEMENT ####################! python3
 # Create two streamers
 alice = Streamer(streamer="Alice", qnames=["Base", "Enhanced"], priority=2,
-                 arrival_rate=6000, I_P_arrival_ratio=0.5, I_P_size_ratio=10,
-                 mean_frames=[30, 40], var_frames=[0, 0])
+                 arrival_rate=6000, I_P_arrival_ratio=0, I_P_size_ratio=10,
+                 mean_frames=[5, 6], var_frames=[0, 0])
 
 bob = Streamer(streamer="Bob", qnames=["Base", "Enhanced"], priority=2,
                arrival_rate=6000, I_P_arrival_ratio=0, I_P_size_ratio=10,
-               mean_frames=[20, 40], var_frames=[0, 0])
+               mean_frames=[5, 6], var_frames=[0, 0])
 
 streamers = [alice, bob]
 # The scheduler to use
@@ -26,7 +26,7 @@ rs = RandomScheduler(streames=streamers)
 
 
 # The channel model
-sc = StableChannelNoWindow(15000)
+sc = StableChannelNoWindow(150000)
 
 
 # receiver
@@ -50,5 +50,6 @@ while total_received < 100:
     tstop = time()
     rs.update(tstart, tstop)
 
+print(receiver.describe(True))
 metrics = receiver.playback()
 print(metrics)
