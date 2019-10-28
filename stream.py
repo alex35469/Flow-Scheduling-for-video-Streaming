@@ -206,14 +206,14 @@ class Frame:
          regarding the tyoe of the frame
      its origine `origine`  """
 
-    def __init__(self, size, order, Iframe, origin="unkown", bitrate=-1, timestamp=-1):
+    def __init__(self, size, order, Iframe, origin="unkown", bitrate=-1, timestamp=-1, availability=-1):
         self.size = size
         self.order = order
         self.Iframe = Iframe
         self.origin = origin
         self.bitrate = bitrate
         self.timestamp = timestamp
-        self.availability = -1
+        self.availability = availability
 
     def describe(self, full=False):
         fs = "Iframe" if self.Iframe else "Pframe"
