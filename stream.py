@@ -6,7 +6,6 @@ File containing all
 from collections import deque
 import numpy as np
 import random
-from time import time
 
 
 class Streamer(object):
@@ -107,7 +106,7 @@ class Streamer(object):
         for q in self.queues:
             infos.append(q.info())
 
-    def dequeue(self, queue_num, n):
+    def dequeue(self, queue_num, n=1):
         """Dequeue queues according to the queue number and
         the nuber of frame to be dequeued
         for instance, if queue_num=0 and n=3:

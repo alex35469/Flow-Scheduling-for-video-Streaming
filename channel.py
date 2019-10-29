@@ -20,6 +20,24 @@ class Channel(ABC):
 
 class StableChannelNoWindow(Channel):
     "Very Simple channel modulation where tansport layer is not modeled"
+    def __init__(self, bandwith, sending_delay=0, speed=1):
+        self.bandwith = bandwith
+        self.sending_delay = sending_delay
+        self.speed = speed
+
+    def send_frames(self, frames):
+        """update availability field of Frames
+        Return list of time that
+        """
+        for f in frames:
+            f.availability = time() * self.speed + f.size / self.bandwith + self.sending_delay
+
+    def changeBandwith(self, bandwith):
+        self.bandwith = bandwith
+
+
+class StableChannelWindow(Channel):
+    "Very Simple channel modulation where tansport layer is not modeled"
     def __init__(self, bandwith, sending_delay=0):
         self.bandwith = bandwith
         self.sending_delay = sending_delay

@@ -12,18 +12,19 @@ class Scheduler(ABC):
     """The scheduler possesses all the queues and has to make a decision: which
     queue he has to pick at which quality"""
 
-    def __init__(self, streamers, dprint=True):
+    def __init__(self, streamers, dprint=True, speed=1):
 
         for streamer in streamers:
             assert(isinstance(streamer, Streamer))
         super().__init__()
         self.streamers = streamers
         self.dprint = dprint
+        self.speed = speed  # Need to handle speed
 
     def __get_poisson_expected_number_of_occurrences(self, streamer, time_elapsed):
         """compute the poisson arrival rate according to the arrival rate in KBps of the source,
         the time elapsed and the mean size of frames of the maximum best quality flow"""
-        nb_occ = streamer.arrival_rate*time_elapsed / streamer.mean_frames[-1]
+        nb_occ = streamer.arrival_rate * time_elapsed / streamer.mean_frames[-1]
         return nb_occ
 
     def step(self, describe=False):
@@ -100,6 +101,60 @@ class RandomScheduler(Scheduler):
         dQueue = random.randint(0, len(dStreamer.queues) - 1)
         dNbFrames = random.randint(1, dStreamer.queues[dQueue].length)
         decidedFrames = dStreamer.dequeue(dQueue, dNbFrames)
+
+        if decidedFrames and dprint:
+            print("Scheduler decided:")
+            for f in decidedFrames:
+                print(f.describe(True))
+        return decidedFrames
+
+
+class FIFOScheduler(Scheduler):
+    """Scheduler that decides frames according to the first-in-first-out principle.
+    The quality level is decided randomly as well as how many frames to dequeue
+    """
+
+    def __init__(self, streames):
+        super().__init__(streames)
+        self.to_be_decided = 0
+        self.visited = dict()
+
+    def decide(self, dprint=False):
+        non_empty_flow = [streamer for streamer in
+                          self.streamers if not streamer.isEmpty()]
+        # No frames in queues
+        if len(non_empty_flow) == 0:
+            return False
+
+        total_frames = sum([s.queues[-1].length for s in non_empty_flow])
+        dNbFrames = min(random.randint(1, total_frames), 500)
+
+        # helper function
+        def recursiveSearch(nb, frames):
+            if nb == 0:
+                return frames
+
+            # is the frame as already been visited?
+            s = self.visited.get(self.to_be_decided)
+            if s:
+                frames.extend(s.dequeue(random.randint(0, len(s.queues)-1)))
+                del self.visited[self.to_be_decided]
+                self.to_be_decided += 1
+                return recursiveSearch(nb - 1, frames)
+
+            for s in non_empty_flow:
+                f = s.queues[-1].getFrames(1)[0]
+                if f.order == self.to_be_decided:
+                    frames.extend(s.dequeue(random.randint(0, len(s.queues)-1)))
+                    self.to_be_decided += 1
+                    return recursiveSearch(nb - 1, frames)
+                else:
+                    self.visited[f.order] = s
+            # not found yet: need to do more iteration
+            return recursiveSearch(nb, frames)
+
+        decidedFrames = recursiveSearch(dNbFrames, [])
+        print(decidedFrames)
 
         if decidedFrames and dprint:
             print("Scheduler decided:")
