@@ -19,7 +19,7 @@ class Channel(ABC):
 
 
 class StableChannelNoWindow(Channel):
-    "Very Simple channel modulation where tansport layer is not modulated"
+    "Very Simple channel modulation where tansport layer is not modeled"
     def __init__(self, bandwith, sending_delay=0):
         self.bandwith = bandwith
         self.sending_delay = sending_delay
