@@ -31,8 +31,9 @@ class Receiver:
         Return:
         dictionary-like results
 
-        {queue 1 :  total_delay
-                    total_rebuffering
+        {queue 1 :  total_rebuffering_event
+                    total_rebuffering_time
+                    total_delay
                     average_rate
                     total_frame
         queue 2  :  ....       }
@@ -63,7 +64,6 @@ class Receiver:
                     lastPlay = f.availability
                     total_rebuffering_time += rebuffering_time
                     total_rebuffering_event += 1
-
                 total_delay += lastPlay - f.timestamp
                 average_rate += f.bitrate
                 total_frame += 1
@@ -73,19 +73,20 @@ class Receiver:
             q.flush()
 
             if total_frame == 0:
+                results[q.name] = 0
                 continue
 
             self.lastPlay[self.originQueueDict[q.name]] = lastPlay
             results[q.name] = {"total_rebuffering_event": total_rebuffering_event,
-                               "total_rebuffering_time": total_rebuffering_time,
-                               "total_delay": total_delay,
+                               "total_rebuffering_time": round(total_rebuffering_time, 6),
+                               "total_delay": round(total_delay, 6),
                                "average_rate": average_rate / total_frame,
                                "total_frame": total_frame}
         return results
 
-    def start(self):
+    def start(self, waiting=0):
         """Inititate the playing process"""
-        self.lastPlay = [time()] * len(self.queues)
+        self.lastPlay = [time() + waiting] * len(self.queues)
         self.startPlay = self.lastPlay[-1]
 
     def receive(self, frames):
