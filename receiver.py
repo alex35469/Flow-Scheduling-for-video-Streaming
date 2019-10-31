@@ -21,9 +21,11 @@ class Receiver:
         self.startPlay = -1
 
 
-    def playback(self):
-        """Play the frames in the queues independently overtime,
+    def playback(self, info=False):
+        """Play the frames in the queues independently overtime.
         i.e. at the end of the simulation
+
+        if info=True, only gives the QoE but does not play the frames.
 
         pros: no time consumption during simulation
         cons: Rewards only come at the end (of the playing)
@@ -70,7 +72,8 @@ class Receiver:
                 # fast forward to the end of the playing frame
                 lastPlay += frame_slot
 
-            q.flush()
+            if not info:
+                q.flush()
 
             if total_frame == 0:
                 results[q.name] = 0
