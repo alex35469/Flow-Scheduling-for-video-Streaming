@@ -13,6 +13,7 @@ In multiparty live streaming, each client upload their video to a central server
 3. A flow has to be delivered in time to the client to not exceed a delay constraint
 4. The streaming content contains I-frame and P-frame that can be handled differently by the scheduler.
 
+*Note that this project is also applicable to VR streaming where streamers can be represented as tiles with different priorities* 
 ### Goal
 The goal of the project is to design a flow scheduling algorythm applied to live multicast video streaming. Create a simulator and evaluate the system. 
 
@@ -39,7 +40,15 @@ The simulation takes different variable as input (the environement) and output a
 the script or at each step of the main loop the metrics that can be used to compute the QoE. (i.e.: latency, rebuffering time...)
 
 The inputs (inside ENVIRONEMENT section) are defined by:
-  - Streamers: all streamers defined by the arrival rate of their streames
+- Streamers: all streamers defined by:
+    1. the arrival rate of their streames
+    2. the priority of the streamer
+    3. the mean and variance of the frame size of all layers
+    4. I frame P frame arrial ratio and size ratio
+- Scheduler
+- Channel defined by the bandwith (only one very simple model exist so far: `StableChannelNoWindow`)
+- Receiver defined by the rate at which it plays the frame: frame per second (`fps`) 
+
   
 ### Model
 - Sequential implementation written in python (321 LOC so far, excluding tests)
