@@ -25,7 +25,7 @@ The Repository consists of 5 main files:
 1. simulation.py:
   Simulate the system (c.f. next section).
 2. stream.py:
-  Define ´Frame´, `Queue` and `Streamer` objects.
+  Define `Frame`, `Queue` and `Streamer` objects.
 3. scheduler:
   Backbone of the project. Define the Abstract class `Scheduler` which will assess the perfomence of the system. (c.f. Scheduler in the next section)
 4. receive.py: 
@@ -47,8 +47,14 @@ The inputs (inside ENVIRONEMENT section) are defined by:
     4. I frame P frame arrial ratio and size ratio
 - Scheduler
 - Channel defined by the bandwith (only one very simple model exist so far: `StableChannelNoWindow`)
-- Receiver defined by the rate at which it plays the frame: frame per second (`fps`) 
+- Receiver defined by the rate at which it plays the frame: frame per second (`fps`)
 
+The outputs for each streamer (QoE metrics returned by the `playback()` function):
+- `total_rebuffering_event`: Sum of rebuffering event.
+- `total_rebuffering_time`: Cumulative sum of the rebuffering time over all the frames played by the streamer.
+- `total_delay`: Cumul. sum of delay between received frame by the serer and played frame in the client.
+- `average_rate`: Average bitrate over all the frames that were played.
+- `total_frame`: number of frames played.
   
 ### Model
 - Sequential implementation written in python (321 LOC so far, excluding tests)
@@ -66,7 +72,7 @@ simulation.py, receiver.py) where each module can be re-implemented, improve wit
 ### Scheduler
 The QoE depends strongly of the choice of the scheduler. A scheduler can be implemented as a class that herits from the abstract class Scheduler.
 
-It must implement only one function: ´decide()´ which decides the frames to send from 
+It must implement only one function: `decide()` which decides the frames to send from 
 
 So far, 2 scheduler have been implemented: 
 - `RandomScheduler`: Bad Scheduler. Make Decision randomley
@@ -76,5 +82,7 @@ So far, 2 scheduler have been implemented:
 ### Future Work 
 - Provide a better model of the channel (For now, only compute the transmission delay as a product of the frame size and the bandwith)
 - Integrate real network traces and frame arrival to compare the real world to the simulator
+- Include a buffer occupancy metric that tells how full is the buffer for each streamer after a `playback()` call
+- Make the simulation faster (introduce a scale time variable to speedup the arrival rate of frame)
 - Design a scheduler that can beat the simple FIFO scheduler based on a predefined QoE function. 
 
