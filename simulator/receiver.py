@@ -19,7 +19,7 @@ class Receiver:
         self.started = False
         self.startPlay = -1
 
-    def playback(self, info=False):
+    def playback(self, info=False, N=0):
         """Play the frames in the queues independently overtime.
         i.e. at the end of the simulation
 
@@ -50,10 +50,10 @@ class Receiver:
             total_rebuffering_event = 0
             total_delay = 0
             total_frame = 0
+            i = 0
 
             # State of the queue
             lastPlay = self.lastPlay[self.originQueueDict[q.name]]
-
             for f in q.queue:
 
                 rebuffering_time = f.availability - lastPlay
@@ -70,6 +70,10 @@ class Receiver:
                 # fast forward to the end of the playing frame
                 lastPlay += frame_slot
 
+                i += 1
+                if i == N and bool(N):
+                    break
+
             if total_frame == 0:
                 results[q.name] = 0
                 continue
@@ -85,8 +89,12 @@ class Receiver:
                 continue
 
             # update the player state
-            q.flush()
             self.lastPlay[self.originQueueDict[q.name]] = lastPlay
+
+            if bool(N):
+                q.dequeue(i)
+            else:
+                q.flush()
 
         return results
 
@@ -102,7 +110,7 @@ class Receiver:
                 self.queues[queue_nb].add(frame)
 
     def describe(self, full=False):
-        s = "Receiver: \nfps = {}, slot = {:.3f}, start_time = {:.3f}\nQueues:".format(self.fps, 1/self.fps, self.startPlay)
+        s = "Receiver: \nfps = {}, slot = {:.3f}, start_time = {:.3f}\nQueues:".format(self.fps, 1 / self.fps, self.startPlay)
         for q in self.queues:
             s += "\n" + q.describe(full)
         return s

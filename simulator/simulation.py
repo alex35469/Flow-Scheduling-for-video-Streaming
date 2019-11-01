@@ -62,6 +62,18 @@ while total_received < N:
     rs.update(tstart, tstop)
 
 
-metrics = receiver.playback()
+metrics = receiver.playback(N=2, info=True)
+print_metrics(metrics)
 
+metrics = receiver.playback(N=2, info=False)
+print_metrics(metrics)
+
+print("----")
+
+print(receiver.describe())
+metrics = receiver.playback(N=2, info=True)
+print(metrics)
+print_metrics(metrics)
+
+metrics = receiver.playback(N=2, info=True)
 print_metrics(metrics)

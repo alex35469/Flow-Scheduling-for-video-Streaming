@@ -52,4 +52,5 @@ class StableChannelWindow(Channel):
     def changeBandwith(self, bandwith):
         self.bandwith = bandwith
 
+
 # Maybe to simulate the window consider the length of frames
