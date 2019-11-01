@@ -2,7 +2,6 @@
 Emulation of the receiver that will consume de stream.
 Contains:
 """
-from stream import Queue
 from time import time
 
 
@@ -14,12 +13,11 @@ class Receiver:
     def __init__(self, queues, fps):
         self.queues = queues
         self.fps = fps
-        self.lastPlay = [0]*len(queues)  # time of the begining of the last frame played
+        self.lastPlay = [0] * len(queues)  # time of the begining of the last frame played
         self.originQueueDict = dict([(q.name, i) for i, q in enumerate(queues)])
         self.isPlaying = [False] * len(queues)
         self.started = False
         self.startPlay = -1
-
 
     def playback(self, info=False):
         """Play the frames in the queues independently overtime.
@@ -72,19 +70,24 @@ class Receiver:
                 # fast forward to the end of the playing frame
                 lastPlay += frame_slot
 
-            if not info:
-                q.flush()
-
             if total_frame == 0:
                 results[q.name] = 0
                 continue
 
-            self.lastPlay[self.originQueueDict[q.name]] = lastPlay
             results[q.name] = {"total_rebuffering_event": total_rebuffering_event,
                                "total_rebuffering_time": round(total_rebuffering_time, 6),
                                "total_delay": round(total_delay, 6),
                                "average_rate": average_rate / total_frame,
                                "total_frame": total_frame}
+
+            # We do not update the receiver server state
+            if info:
+                continue
+
+            # update the player state
+            q.flush()
+            self.lastPlay[self.originQueueDict[q.name]] = lastPlay
+
         return results
 
     def start(self, waiting=0):

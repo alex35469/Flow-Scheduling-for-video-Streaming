@@ -23,9 +23,13 @@ class Streamer(object):
 
     Frame_Arrival = 0
 
-    def __init__(self, streamer, qnames, priority, arrival_rate,
-                 I_P_arrival_ratio, I_P_size_ratio, mean_frames, var_frames):
-
+    def __init__(self, streamer=0, qnames=0, priority=0, arrival_rate=0,
+                 I_P_arrival_ratio=0, I_P_size_ratio=0, mean_frames=0,
+                 var_frames=0, traces=0):
+        self.deterministic = (streamer or qnames or priority or arrival_rate or
+                              I_P_arrival_ratio or I_P_size_ratio or mean_frames
+                              or var_frames)
+        assert self.deterministic != bool(traces), "The system is either deterministic or random"
         assert(len(mean_frames) == len(var_frames) == len(qnames))
         assert(0 <= I_P_arrival_ratio <= 1)
         self.streamer = streamer

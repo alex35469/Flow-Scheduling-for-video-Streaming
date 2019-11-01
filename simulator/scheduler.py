@@ -90,7 +90,7 @@ class RandomScheduler(Scheduler):
     def __init__(self, streames):
         super().__init__(streames)
 
-    def decide(self, dprint=False):
+    def decide(self, dprint=False, maxf=1):
         non_empty_flow = [streamer for streamer in
                           self.streamers if not streamer.isEmpty()]
         # No frames in queues
@@ -99,7 +99,7 @@ class RandomScheduler(Scheduler):
 
         dStreamer = random.sample(non_empty_flow, 1)[0]
         dQueue = random.randint(0, len(dStreamer.queues) - 1)
-        dNbFrames = random.randint(1, dStreamer.queues[dQueue].length)
+        dNbFrames = min(random.randint(1, dStreamer.queues[dQueue].length), maxf)
         decidedFrames = dStreamer.dequeue(dQueue, dNbFrames)
 
         if decidedFrames and dprint:
@@ -119,7 +119,8 @@ class FIFOScheduler(Scheduler):
         self.to_be_decided = 0
         self.visited = dict()
 
-    def decide(self, dprint=False):
+    def decide(self, dprint=False, maxf=1):
+        """Decide the frame according to their arrivals"""
         non_empty_flow = [streamer for streamer in
                           self.streamers if not streamer.isEmpty()]
         # No frames in queues
@@ -127,7 +128,7 @@ class FIFOScheduler(Scheduler):
             return False
 
         total_frames = sum([s.queues[-1].length for s in non_empty_flow])
-        dNbFrames = min(random.randint(1, total_frames), 500)
+        dNbFrames = min(random.randint(1, total_frames), maxf)
 
         # helper function
         def recursiveSearch(nb, frames):
@@ -137,7 +138,7 @@ class FIFOScheduler(Scheduler):
             # is the frame as already been visited?
             s = self.visited.get(self.to_be_decided)
             if s:
-                frames.extend(s.dequeue(random.randint(0, len(s.queues)-1)))
+                frames.extend(s.dequeue(random.randint(0, len(s.queues) - 1)))
                 del self.visited[self.to_be_decided]
                 self.to_be_decided += 1
                 return recursiveSearch(nb - 1, frames)
@@ -145,7 +146,7 @@ class FIFOScheduler(Scheduler):
             for s in non_empty_flow:
                 f = s.queues[-1].getFrames(1)[0]
                 if f.order == self.to_be_decided:
-                    frames.extend(s.dequeue(random.randint(0, len(s.queues)-1)))
+                    frames.extend(s.dequeue(random.randint(0, len(s.queues) - 1)))
                     self.to_be_decided += 1
                     return recursiveSearch(nb - 1, frames)
                 else:
@@ -154,10 +155,13 @@ class FIFOScheduler(Scheduler):
             return recursiveSearch(nb, frames)
 
         decidedFrames = recursiveSearch(dNbFrames, [])
-        print(decidedFrames)
 
         if decidedFrames and dprint:
             print("Scheduler decided:")
             for f in decidedFrames:
                 print(f.describe(True))
         return decidedFrames
+
+
+class PriorityBasedScheduler(Scheduler):
+    pass

@@ -41,14 +41,17 @@ sc = StableChannelNoWindow(1000)
 receiver_buffer_size = -1  # Not yet known
 receiver = Receiver(queues=[Queue(s.streamer) for s in streamers], fps=30)
 
+
+# ############ SIMULATION ####################
+
+
 N = 100
 total_received = 0
 receiver.start(waiting=0)
-
 while total_received < N:
     # Scheduler
     tstart = time()
-    frames = rs.decide(dprint=True)
+    frames = rs.decide(dprint=False)
 
     if frames:
         total_received += len(frames)

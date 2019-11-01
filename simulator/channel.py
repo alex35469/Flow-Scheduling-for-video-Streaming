@@ -8,7 +8,7 @@ from time import time
 
 
 class Channel(ABC):
-    def __init__(self, channelDesc):
+    def __init__(self):
         pass
 
     @abstractmethod
