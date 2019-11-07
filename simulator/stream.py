@@ -209,22 +209,28 @@ class Frame:
          regarding the tyoe of the frame
      its origine `origine`  """
 
-    def __init__(self, size, order, Iframe, origin="unkown", bitrate=-1, timestamp=-1, availability=-1):
+    def __init__(self, size, order, Iframe, origin="unkown", bitrate=None, timestamp=None, availability=None):
         self.size = size
         self.order = order
         self.Iframe = Iframe
         self.origin = origin
         self.bitrate = bitrate
         self.timestamp = timestamp
+        self.sent = None
+        self.last_sent = None
         self.availability = availability
 
     def describe(self, full=False):
         fs = "Iframe" if self.Iframe else "Pframe"
         s = "{} #{}: {}Kb | ".format(fs, self.order, self.size)
         if full:
-            s = ("   {} #{}: {}Kb from {} stamp={:.5f} "
-                 "avail={:.5f} br={} \n").format(fs, self.order, self.size,
+            available = -1 if self.availability is None else self.availability % 100
+            available = -1 if self.availability is None else self.availability % 100
+            available = -1 if self.availability is None else self.availability % 100
+
+            s = ("   {} #{}: {}Kb from {}, stamp={:.4f} "
+                 "avail={:.4f}, br={:.1f} \n").format(fs, self.order, self.size,
                                                  self.origin, self.timestamp % 100,
-                                                 self.availability % 100, self.bitrate)
+                                                 available, self.bitrate)
 
         return s

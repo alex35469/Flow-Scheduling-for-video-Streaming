@@ -1,15 +1,18 @@
 import io
 import sys
+import os
 
+PATH = os.path.dirname(os.path.abspath(__file__))
 
 def read_network_trace(path):
     "Return a generator that outputs the trace"
+    full_path = PATH + path
     def read_nt():
-        with open(path) as nt:
+        with open(full_path) as nt:
             for line in nt:
                 line = line.strip()
                 if str.isdigit(line):
-                    yield line
+                    yield int(line)
     return read_nt
 
 
@@ -20,7 +23,7 @@ def read_frame_trace(path):
             for line in nt:
                 line = line.strip()
                 if str.isdigit(line):
-                    yield line
+                    yield int(line)
     return read_nt
 
 def print_metrics(d):
