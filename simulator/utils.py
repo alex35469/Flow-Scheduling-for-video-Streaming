@@ -1,8 +1,17 @@
 import io
 import sys
 import os
+from time import time
 
 PATH = os.path.dirname(os.path.abspath(__file__))
+
+
+def get_scaled_time(scale):
+    "Get a scalable time"
+    def get_time():
+        return scale * time()
+    return get_time
+
 
 def read_network_trace(path):
     "Return a generator that outputs the trace"
