@@ -7,18 +7,21 @@ from stream import Streamer, Queue
 from time import time
 from channel import StableChannelNoWindow, NetworkTracesChannel
 from receiver import Receiver
-from utils import print_metrics, read_network_trace
+from utils import print_metrics, read_network_trace, get_scaled_time
 
+
+### SIMULATION VARIABLE
+SPEED_FORWARD = 1000  # gain compare to the real speed time
 
 # ############ ENVIRONEMENT ####################
 
 # ----- Streamer ------
 alice = Streamer(streamer="Alice", qnames=["Base", "Enhanced"], priority=2,
-                 arrival_rate=150, I_P_arrival_ratio=0.2, I_P_size_ratio=5,
+                 arrival_rate=1500, I_P_arrival_ratio=0.2, I_P_size_ratio=5,
                  mean_frames=[8, 10], var_frames=[0, 0])
 
 bob = Streamer(streamer="Bob", qnames=["Base", "Enhanced"], priority=2,
-               arrival_rate=100, I_P_arrival_ratio=0.2, I_P_size_ratio=5,
+               arrival_rate=1000, I_P_arrival_ratio=0.2, I_P_size_ratio=5,
                mean_frames=[5, 6], var_frames=[0, 0])
 
 carlos = Streamer(streamer="Carlos", qnames=["Base", "Enhanced"], priority=2,
@@ -41,37 +44,41 @@ rs = FIFOScheduler(streames=streamers)
 
 # network traces
 path_huabei = "/traces/huabei/liveldResult_2019-05-12.txt"
-sc = NetworkTracesChannel(path_huabei, 0.5)
+sc = NetworkTracesChannel(path_huabei, 0.5, scale_time=SPEED_FORWARD)
 
 # ----- Receiver ------
 receiver_buffer_size = -1  # Not yet known
-receiver = Receiver(queues=[Queue(s.streamer) for s in streamers], fps=30)
+receiver = Receiver(queues=[Queue(s.streamer) for s in streamers],
+                    fps=30, scaled_time=SPEED_FORWARD)
 
 
 # ############ SIMULATION ####################
 
+get_time = get_scaled_time(scale=SPEED_FORWARD)
 N = 100
 total_received = 0
 receiver.start(waiting=0)
 
 # Follow network traces
 cumultime = 0
-tstart = time()
-while cumultime < 3:
+loop = 0
+while loop < 40:
 
+    tstart = get_time()
 
     frames = rs.decide(dprint=False)
 
     if frames:
         total_received += len(frames)
-        sc.send_frames(frames, time() - tstart)
+        sc.send_frames(frames, get_time() - tstart)
         receiver.receive(frames)
 
-    tstop = time()
+    tstop = get_time()
     rs.update(tstart, tstop)
-    tstart = time()
-    # change the bandwidth
+    print("Cumul out = ", cumultime)
+
     cumultime += tstop - tstart
+    loop += 1
 
 print(receiver.describe(full=True))
 metrics = receiver.playback()
