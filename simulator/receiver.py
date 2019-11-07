@@ -2,7 +2,7 @@
 Emulation of the receiver that will consume de stream.
 Contains:
 """
-from time import time
+from utils import get_scaled_time
 
 
 class Receiver:
@@ -10,7 +10,7 @@ class Receiver:
 
     MAX_BUFFER = 1_000_000  # Buffer size in KB
 
-    def __init__(self, queues, fps):
+    def __init__(self, queues, fps, scaled_time=1):
         self.queues = queues
         self.fps = fps
         self.lastPlay = [0] * len(queues)  # time of the begining of the last frame played
@@ -18,6 +18,8 @@ class Receiver:
         self.isPlaying = [False] * len(queues)
         self.started = False
         self.startPlay = -1
+        self.scaled_time = scaled_time
+        self.get_time = get_scaled_time(scaled_time)
 
     def playback(self, info=False, N=0):
         """Play the frames in the queues independently overtime.
@@ -100,7 +102,7 @@ class Receiver:
 
     def start(self, waiting=0):
         """Inititate the playing process"""
-        self.lastPlay = [time() + waiting] * len(self.queues)
+        self.lastPlay = [self.get_time() + waiting * self.scaled_time] * len(self.queues)
         self.startPlay = self.lastPlay[-1]
 
     def receive(self, frames):
