@@ -38,24 +38,35 @@ class StableChannelNoWindow(Channel):
 
 class NetworkTracesChannel(Channel):
     "Very Simple channel modulation where tansport layer is not modeled"
-    def __init__(self, path, traces_intertime, scale_time=1):
+    def __init__(self, path, traces_intertime, scale_time=1, iprint=False):
         super().__init__(scale_time)
         self.trace_generator = read_network_trace(path)()
+        self.path = path
         self.traces_intertime = traces_intertime
         self.current_time = 0
         self.current_bandwidth = next(self.trace_generator)
         self.queue = []
+        self.trace_update = 0
+        self.iprint = iprint
 
     def get_next_bandwidth(self, elapsed):
         t_left = self.traces_intertime - self.current_time % self.traces_intertime
         self.current_time += elapsed
-        print("Cumulated current time: ", self.current_time)
+        if self.current_time > self.trace_update:
+            print("Cumulated current time: {:.2f}".format(self.current_time))
+            self.trace_update += 5
         if elapsed < t_left:
             return self.current_bandwidth
 
         to_fwd = int((elapsed - t_left) // self.traces_intertime) + 1
         for _ in range(to_fwd):
-            bandwidth = next(self.trace_generator)
+            try:
+                bandwidth = next(self.trace_generator)
+            except StopIteration:
+                # Reset the iterator
+                self.trace_generator = read_network_trace(self.path)()
+                bandwidth = next(self.trace_generator)
+
         self.current_bandwidth = bandwidth
         return self.current_bandwidth
 
@@ -63,15 +74,15 @@ class NetworkTracesChannel(Channel):
     def update_availability_frame_sent(self, old_bandwidth):
 
         new_queue = []
-
-        print("Bandwidth is being updated: {} old -> {}".format(old_bandwidth,
+        if self.iprint:
+            print("Bandwidth is being updated: {} old -> {}".format(old_bandwidth,
                                                                 self.current_bandwidth))
         if self.current_bandwidth == 0:
             for f, _ in self.queue:
                 t = self.get_time()
-                if frame.availability >= t:
-                    frame.availability = None
-                    updated_kb_sent = elapsed * old_bandwidth + kb_sent
+                if f.availability >= t:
+                    f.availability = None
+                    # updated_kb_sent = elapsed * old_bandwidth + kb_sent
 
 
 
@@ -113,7 +124,7 @@ class NetworkTracesChannel(Channel):
         for f in frames:
             if self.current_bandwidth > 0:
                 f.sent = self.get_time()
-                print(f.describe(), " => sent at ", f.sent)
+                #print(f.describe(), " => sent at ", f.sent)
                 f.availability = f.sent + f.size / self.current_bandwidth
 
             self.queue.append((f, 0))
