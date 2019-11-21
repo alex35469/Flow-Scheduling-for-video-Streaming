@@ -4,6 +4,7 @@ from stream import Frame, Queue, Streamer
 from scheduler import RandomScheduler
 from time import time
 from receiver import Receiver
+from utils import get_scaled_time
 
 class FrameTestCase(unittest.TestCase):
 
@@ -72,25 +73,34 @@ class SchedulerTestCase(unittest.TestCase):
 
         self.bob = Streamer(streamer="Bob", qnames=["Base", "Enhanced"], priority=2,
                             arrival_rate=60, I_P_arrival_ratio=0.5, I_P_size_ratio=10,
-                            mean_frames=[30, 40], var_frames=[0, 7])
+                            mean_frames=[30, 40], var_frames=[0, 0])
 
         # The scheduler to use
         self.rs = RandomScheduler(streames=[self.alice, self.bob])
 
-    @unittest.skip("take approx. 10 sec to run")
+    #@unittest.skip("take approx. 10 sec to run")
     def test_empiricalArrivalRate(self):
-
+        SPEED_FORWARD = 1000
+        get_time = get_scaled_time(scale=SPEED_FORWARD)
         ttime = 0
         tkb = 0
-        for N in range(1_000_000):
-            elapsed = 0.1
-            updated_frames = self.rs.update(elapsed=elapsed)
+        tstart = get_time()
+        loop = 0
+        while ttime < 4800:  # 2400 sec = 30 min
+            tstop = get_time()
+
+            updated_frames = self.rs.update(tstart, tstop)
+            ttime += tstop - tstart
+
+            tstart = get_time()
+
             self.rs.decide()
-            # print(rs.describe())
             total_kb = sum([f.size for f in updated_frames])
             tkb += total_kb
-            ttime += elapsed
+            tstop = get_time()
+            loop += 1
 
+        print("average_intertime = ", ttime/loop)
         expected_total = sum([s.arrival_rate for s in self.rs.streamers])
         delta = expected_total/100  # 1% of the total arrival rate
 

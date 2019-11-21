@@ -11,7 +11,8 @@ from utils import print_metrics, read_network_trace, get_scaled_time
 
 
 ### SIMULATION VARIABLE
-SPEED_FORWARD = 1000  # gain compare to the real speed time
+SPEED_FORWARD = 450  # gain compare to the real speed time
+MAX_INTERTIME_UPDATE_DURATION = 0.1  # maximum time spent between 2 updates
 
 # ############ ENVIRONEMENT ####################
 
@@ -40,11 +41,11 @@ rs = FIFOScheduler(streames=streamers)
 
 
 # ----- Channel ------
-# sc = StableChannelNoWindow(bandwidth=1000)
+sc = StableChannelNoWindow(bandwidth=1000, scale_time=SPEED_FORWARD)
 
 # network traces
-path_huabei = "/traces/huabei/liveldResult_2019-05-12.txt"
-sc = NetworkTracesChannel(path_huabei, 0.5, scale_time=SPEED_FORWARD)
+# path_huabei = "/traces/huabei/liveldResult_2019-05-12.txt"
+# sc = NetworkTracesChannel(path_huabei, 0.5, scale_time=SPEED_FORWARD)
 
 # ----- Receiver ------
 receiver_buffer_size = -1  # Not yet known
@@ -62,7 +63,7 @@ receiver.start(waiting=0)
 # Follow network traces
 cumultime = 0
 loop = 0
-while loop < 40:
+while cumultime < 4800:  # 1 hour simulation
 
     tstart = get_time()
 
@@ -70,16 +71,18 @@ while loop < 40:
 
     if frames:
         total_received += len(frames)
-        sc.send_frames(frames, get_time() - tstart)
+        sending_time = get_time() - tstart
+        sc.send_frames(frames)# , sending_time)
         receiver.receive(frames)
 
     tstop = get_time()
     rs.update(tstart, tstop)
-    print("Cumul out = ", cumultime)
-
-    cumultime += tstop - tstart
+    elapsed = tstop - tstart
+    if elapsed > MAX_INTERTIME_UPDATE_DURATION:
+        print("Warning: Elapsed time between 2 updates is too large\nelased={} Max={}".format(elapsed, MAX_INTERTIME_UPDATE_DURATION))
+    cumultime += elapsed
     loop += 1
-
-print(receiver.describe(full=True))
+print("Cumul = ", cumultime)
+# print(receiver.describe(full=True))
 metrics = receiver.playback()
 print_metrics(metrics)

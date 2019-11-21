@@ -21,7 +21,7 @@ class Channel(ABC):
 class StableChannelNoWindow(Channel):
     "Very Simple channel modulation where tansport layer is not modeled"
     def __init__(self, bandwidth, sending_delay=0, scale_time=1):
-        super().__init__(scale_time=1)
+        super().__init__(scale_time)
         self.bandwidth = bandwidth
         self.sending_delay = sending_delay
 
@@ -30,7 +30,7 @@ class StableChannelNoWindow(Channel):
         Return list of time that
         """
         for f in frames:
-            f.availability = self.get_time() * self.speed + f.size / self.bandwidth + self.sending_delay
+            f.availability = self.get_time() + f.size / self.bandwidth + self.sending_delay
 
     def changeBandwith(self, bandwidth):
         self.bandwidth = bandwidth
@@ -39,7 +39,7 @@ class StableChannelNoWindow(Channel):
 class NetworkTracesChannel(Channel):
     "Very Simple channel modulation where tansport layer is not modeled"
     def __init__(self, path, traces_intertime, scale_time=1):
-        super().__init__(scale_time=1)
+        super().__init__(scale_time)
         self.trace_generator = read_network_trace(path)()
         self.traces_intertime = traces_intertime
         self.current_time = 0
@@ -113,6 +113,7 @@ class NetworkTracesChannel(Channel):
         for f in frames:
             if self.current_bandwidth > 0:
                 f.sent = self.get_time()
+                print(f.describe(), " => sent at ", f.sent)
                 f.availability = f.sent + f.size / self.current_bandwidth
 
             self.queue.append((f, 0))

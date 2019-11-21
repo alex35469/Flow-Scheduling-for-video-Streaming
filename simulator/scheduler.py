@@ -43,7 +43,8 @@ class Scheduler(ABC):
         elapsed in sec
         """
         elapsed = tstop - tstart
-        assert(elapsed > 0)
+        if elapsed < 0:
+            return []
         # Compute each time the total incoming flow in case we want to simulate
         # arrival rate change overtime
         lambdas = [self.__get_poisson_expected_number_of_occurrences(s, elapsed)

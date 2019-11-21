@@ -224,13 +224,11 @@ class Frame:
         fs = "Iframe" if self.Iframe else "Pframe"
         s = "{} #{}: {}Kb | ".format(fs, self.order, self.size)
         if full:
-            available = -1 if self.availability is None else self.availability % 100
-            available = -1 if self.availability is None else self.availability % 100
-            available = -1 if self.availability is None else self.availability % 100
+            available = -1 if self.availability is None else self.availability
 
             s = ("   {} #{}: {}Kb from {}, stamp={:.4f} "
                  "avail={:.4f}, br={:.1f} \n").format(fs, self.order, self.size,
-                                                 self.origin, self.timestamp % 100,
+                                                 self.origin, self.timestamp,
                                                  available, self.bitrate)
 
         return s
